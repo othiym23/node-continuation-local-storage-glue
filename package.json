@@ -1,0 +1,31 @@
+{
+  "name": "local-context-domains",
+  "version": "0.0.0",
+  "description": "https://github.com/joyent/node/issues/5243 used for domains",
+  "main": "bootstrap.js",
+  "scripts": {
+    "test": "tap test/*.tap.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/othiym23/node-local-context-domains.git"
+  },
+  "keywords": [
+    "threading",
+    "shared",
+    "context",
+    "domains",
+    "tracing",
+    "loggin",
+    "unsafe"
+  ],
+  "author": "Forrest L Norvell <ogd@aoaioxxysz.net>",
+  "license": "BSD",
+  "devDependencies": {
+    "tap": "~0.4.3"
+  },
+  "dependencies": {
+    "local-context": "~0.1.1",
+    "shimmer": "~0.6.1"
+  }
+}
