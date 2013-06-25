@@ -16,3 +16,37 @@ test("monkeypatching namespaces over domains", function (t) {
   var sample = domain.create();
   t.ok(sample.__NAMESPACE, "Domain belongs to a namespace.");
 });
+
+test("overwriting startup.processNextTick", function (t) {
+  t.plan(3);
+
+  t.ok(process.nextTick.__wrapped,
+       "should wrap process.nextTick()");
+  t.ok(process._nextDomainTick.__wrapped,
+       "should wrap process._nextDomainTick()");
+  t.ok(process._tickDomainCallback.__wrapped,
+       "should wrap process._tickDomainCallback()");
+});
+
+test("overwriting timers", function (t) {
+  t.plan(9);
+
+  t.ok(setTimeout.__wrapped, "should wrap setTimeout()");
+  t.ok(setInterval.__wrapped, "should wrap setInterval()");
+  t.ok(setImmediate.__wrapped, "should wrap setImmediate()");
+
+  t.ok(global.setTimeout.__wrapped, "should also wrap global setTimeout()");
+  t.ok(global.setInterval.__wrapped, "should also wrap global setInterval()");
+  t.ok(global.setImmediate.__wrapped, "should also wrap global setImmediate()");
+
+  var timers = require('timers');
+  t.ok(timers.setTimeout.__wrapped, "should wrap setTimeout()");
+  t.ok(timers.setInterval.__wrapped, "should wrap setInterval()");
+  t.ok(timers.setImmediate.__wrapped, "should wrap setImmediate()");
+
+  /* It would be nice to test that monkeypatching preserves the status quo
+   * ante, but assert thinks setTimeout !== global.setTimeout (why?) and both of
+   * those are a wrapper around NativeModule.require("timers").setTimeout,
+   * presumably to try to prevent the kind of "fun" I'm having here.
+   */
+});
