@@ -32,24 +32,6 @@ function copyContexts(current, target) {
 }
 
 /**
- * Set up a new substrate for domains (eventually will replace / be aliased to domains)
- */
-var domainspace = context.createNamespace('__core_domain');
-function namespacer(domainConstructor) {
-  return function () {
-    var returned = domainConstructor.apply(this, arguments);
-    returned.__NAMESPACE = domainspace;
-    this.__context = domainspace.createContext("domain");
-
-    return returned;
-  };
-}
-
-wrap(domain, 'create', namespacer);
-wrap(domain, 'createDomain', namespacer);
-
-
-/**
  * Make sure that active contexts are captured during turnings of the event loop.
  *
  * FIXME: may not be necessary (WIP)
@@ -73,6 +55,24 @@ wrap(global, 'setImmediate', activator);
 wrap(timers, 'setTimeout', activator);
 wrap(timers, 'setInterval', activator);
 wrap(timers, 'setImmediate', activator);
+
+
+/**
+ * Set up a new substrate for domains (eventually will replace / be aliased to domains)
+ */
+var domainspace = context.createNamespace('__core_domain');
+function namespacer(domainConstructor) {
+  return function () {
+    var returned = domainConstructor.apply(this, arguments);
+    returned.__NAMESPACE = domainspace;
+    this.__context = domainspace.createContext("domain");
+
+    return returned;
+  };
+}
+
+wrap(domain, 'create', namespacer);
+wrap(domain, 'createDomain', namespacer);
 
 
 // PUBLIC API STARTS HERE: there isn't much of one
