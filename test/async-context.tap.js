@@ -4,7 +4,7 @@ require('../bootstrap.js');
 
 var tap             = require('tap')
   , test            = tap.test
-  , createNamespace = require('local-context').createNamespace
+  , createNamespace = require('continuation-local-storage').createNamespace
   ;
 
 test("asynchronously propagating state with local-context-domains", function (t) {

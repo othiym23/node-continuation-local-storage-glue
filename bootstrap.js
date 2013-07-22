@@ -1,6 +1,6 @@
 'use strict';
 
-var context = require('local-context')
+var context = require('continuation-local-storage')
   , domain  = require('domain')
   , timers  = require('timers') // always a sign there's fun ahead
   , shimmer = require('shimmer')

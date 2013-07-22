@@ -5,7 +5,7 @@ require('../bootstrap.js');
 var dns             = require('dns')
   , tap             = require('tap')
   , test            = tap.test
-  , createNamespace = require('local-context').createNamespace
+  , createNamespace = require('continuation-local-storage').createNamespace
   ;
 
 test("continuation-local state with MakeCallback and DNS module", function (t) {
