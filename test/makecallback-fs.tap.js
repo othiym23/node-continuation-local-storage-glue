@@ -121,7 +121,6 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
     createFile(t);
 
     mapIds('daemon', 'daemon', function (error, uid, gid) {
-      console.log("error: %s, uid: %s, gid: %s", error, typeof uid, typeof gid);
       t.notOk(error, "looking up uid & gid shouldn't error");
       t.ok(uid, "uid for daemon was found");
       t.ok(gid, "gid for daemon was found");
@@ -131,8 +130,8 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
         namespace.set('test', 'chown');
         t.equal(namespace.get('test'), 'chown', "state has been mutated");
 
-        // this will fail silently on OS X, because you can't change ownership
-        // except as superuser, but that's irrelevant for the purposes of this test
+        // this will fail silently as long as node-tap is using graceful-fs,
+        // because it swallows EPERMs returned by chown
         fs.chown(FILENAME, uid, gid, function (error) {
           t.notOk(error, "changing ownership shouldn't error");
 
@@ -150,7 +149,6 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
     createFile(t);
 
     mapIds('daemon', 'daemon', function (error, uid, gid) {
-      console.log("error: %s, uid: %s, gid: %s", error, typeof uid, typeof gid);
       t.notOk(error, "looking up uid & gid shouldn't error");
       t.ok(uid, "uid for daemon was found");
       t.ok(gid, "gid for daemon was found");
@@ -161,8 +159,8 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
         t.equal(namespace.get('test'), 'fchown', "state has been mutated");
 
         var file = fs.openSync(FILENAME, 'w');
-        // this will fail silently on OS X, because you can't change ownership
-        // except as superuser, but that's irrelevant for the purposes of this test
+        // this will fail silently as long as node-tap is using graceful-fs,
+        // because it swallows EPERMs returned by chown
         fs.fchown(file, uid, gid, function (error) {
           t.notOk(error, "changing ownership shouldn't error");
 
