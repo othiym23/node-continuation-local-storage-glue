@@ -1,12 +1,13 @@
 'use strict';
 
-var context = require('continuation-local-storage')
-  , domain  = require('domain')
-  , timers  = require('timers') // always a sign there's fun ahead
-  , shimmer = require('shimmer')
-  , wrap    = shimmer.wrap
-  , unwrap  = shimmer.unwrap
+var context  = require('continuation-local-storage')
+  , domain   = require('domain')
+  , shimmer  = require('shimmer')
+  , wrap     = shimmer.wrap
+  , massWrap = shimmer.massWrap
   ;
+
+var slice = [].slice;
 
 /**
  * Save the active domains for later lookup in a subsequent turn of the
@@ -31,6 +32,29 @@ function copyContexts(current, target) {
   return actives;
 }
 
+function getContexts(target) {
+  if (!target) return;
+  if (!target.__actives) throw new Error("No active namespaces to restore.");
+
+  return target.__actives;
+}
+
+function enterContexts(contexts) {
+  if (!(contexts && Array.isArray(contexts))) return;
+
+  contexts.forEach(function (context) {
+    context.enter();
+  });
+}
+
+function exitContexts(contexts) {
+  if (!(contexts && Array.isArray(contexts))) return;
+
+  contexts.forEach(function (context) {
+    context.exit();
+  });
+}
+
 /**
  * Make sure that active contexts are captured during turnings of the event loop.
  *
@@ -40,22 +64,100 @@ function copyContexts(current, target) {
 function activator(propagator) {
   return function () {
     copyContexts(process.namespaces, this);
-    return propagator.apply(this, arguments);
+
+    // FIXME: this is in major need of refactoring out
+    var args = slice.call(arguments);
+    var callback = args[args.length - 1];
+    if (typeof callback === 'function') {
+      args[args.length - 1] = function () {
+        var contexts = getContexts(this);
+        enterContexts(contexts);
+        callback.apply(this, arguments);
+        exitContexts(contexts);
+      }.bind(this);
+    }
+
+    return propagator.apply(this, args);
   };
 }
 
-wrap(process, 'nextTick', activator);
-wrap(process, '_nextDomainTick', activator);
-wrap(process, '_tickDomainCallback', activator);
+massWrap(
+  process,
+  [
+    'nextTick',
+    '_nextDomainTick',
+    '_tickDomainCallback'
+  ],
+  activator
+);
 
-wrap(global, 'setTimeout', activator);
-wrap(global, 'setInterval', activator);
-wrap(global, 'setImmediate', activator);
+massWrap(
+  [global, require('timers')],
+  [
+    'setTimeout',
+    'setInterval',
+    'setImmediate'
+  ],
+  activator
+);
 
-wrap(timers, 'setTimeout', activator);
-wrap(timers, 'setInterval', activator);
-wrap(timers, 'setImmediate', activator);
+massWrap(
+  require('dns'),
+  [
+    'lookup',
+    'resolve',
+    'resolve4',
+    'resolve6',
+    'resolveCname',
+    'resolveMx',
+    'resolveNs',
+    'resolveTxt',
+    'resolveSrv',
+    'resolveNaptr',
+    'reverse'
+  ],
+  activator
+);
 
+massWrap(
+  require('fs'),
+  [
+    'watch',
+    'rename',
+    'ftruncate',
+    'truncate',
+    'chown',
+    'fchown',
+    'lchown',
+    'chmod',
+    'fchmod',
+    'lchmod',
+    'stat',
+    'lstat',
+    'fstat',
+    'link',
+    'symlink',
+    'readlink',
+    'realpath',
+    'unlink',
+    'rmdir',
+    'mkdir',
+    'readdir',
+    'close',
+    'open',
+    'utimes',
+    'futimes',
+    'fsync',
+    'write',
+    'read',
+    'readFile',
+    'writeFile',
+    'appendFile',
+    'watchFile',
+    'unwatchFile',
+  ],
+  activator
+);
 
 /**
  * Set up a new substrate for domains (eventually will replace / be aliased to domains)
@@ -80,17 +182,19 @@ module.exports = {
   /* If you call this, you have greater faith in my code than I do.
    * Mostly here for testing.
    */
-  stop : function () {
-    unwrap(domain, 'create');
-    unwrap(domain, 'createDomain');
-    unwrap(process, 'nextTick');
-    unwrap(process, '_nextDomainTick');
-    unwrap(process, '_tickDomainCallback');
-    unwrap(global, 'setTimeout');
-    unwrap(global, 'setInterval');
-    unwrap(global, 'setImmediate');
-    unwrap(timers, 'setTimeout');
-    unwrap(timers, 'setInterval');
-    unwrap(timers, 'setImmediate');
-  }
+  // on second thought, this is a bad idea
+  // FIXME: re-add this when we have all the pieces in place
+  // stop : function () {
+  //   unwrap(domain, 'create');
+  //   unwrap(domain, 'createDomain');
+  //   unwrap(process, 'nextTick');
+  //   unwrap(process, '_nextDomainTick');
+  //   unwrap(process, '_tickDomainCallback');
+  //   unwrap(global, 'setTimeout');
+  //   unwrap(global, 'setInterval');
+  //   unwrap(global, 'setImmediate');
+  //   unwrap(timers, 'setTimeout');
+  //   unwrap(timers, 'setInterval');
+  //   unwrap(timers, 'setImmediate');
+  // }
 };

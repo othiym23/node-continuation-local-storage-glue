@@ -26,6 +26,6 @@
   },
   "dependencies": {
     "continuation-local-storage": "~0.1.1",
-    "shimmer": "~0.6.1"
+    "shimmer": "0.7.x"
   }
 }
