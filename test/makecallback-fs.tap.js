@@ -73,7 +73,7 @@ function mapIds(username, groupname, callback) {
 }
 
 test("continuation-local state with MakeCallback and fs module", function (t) {
-  t.plan(20);
+  t.plan(22);
 
   var namespace = createNamespace('fs');
   namespace.set('test', 0xabad1dea);
@@ -450,7 +450,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
         t.equal(namespace.get('test'), 'unlink',
                 "mutated state has persisted to fs.unlink's callback");
 
-        t.notOk(path.exists(FILENAME), "file should be gone");
+        t.notOk(fs.exists(FILENAME), "file should be gone");
         t.end();
       });
     });
@@ -556,9 +556,65 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
     });
   });
 
-  // TODO: 'watch'
-  // TODO: 'watchFile'
-  // TODO: 'unwatchFile'
+  t.test("fs.watch", function (t) {
+    createFile(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'watch');
+      t.equal(namespace.get('test'), 'watch', "state has been mutated");
+
+      var watcher = fs.watch(FILENAME,
+                             {persistent : false, interval : 200},
+                             function (event) {
+        t.equal(namespace.get('test'), 'watch',
+                "mutated state has persisted to fs.watch's callback");
+
+        t.equal(event, 'change', "file was changed");
+
+        watcher.close();
+        setImmediate(function cleanup() {
+          deleteFile();
+          t.end();
+        });
+      });
+
+      setImmediate(function poke() {
+        fs.writeFileSync(FILENAME, 'still a test');
+      });
+    });
+  });
+
+  t.test("fs.watchFile", function (t) {
+    createFile(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'watchFile');
+      t.equal(namespace.get('test'), 'watchFile', "state has been mutated");
+
+      fs.watchFile(FILENAME,
+                   {persistent : false, interval : 200},
+                   function (before, after) {
+        t.equal(namespace.get('test'), 'watchFile',
+                "mutated state has persisted to fs.watchFile's callback");
+
+        t.ok(before.ino, "file has an entry");
+        t.equal(before.ino, after.ino, "file is at the same location");
+
+        fs.unwatchFile(FILENAME);
+        setImmediate(function () {
+          deleteFile();
+          t.end();
+        });
+      });
+
+      setImmediate(function poke() {
+        fs.writeFileSync(FILENAME, 'still a test');
+      });
+    });
+  });
+
   // TODO: 'utimes'
   // TODO: 'futimes'
   // TODO: 'fsync'
@@ -569,4 +625,5 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   // TODO: 'readFile'
   // TODO: 'writeFile'
   // TODO: 'appendFile'
+  // TODO: 'exists'
 });
