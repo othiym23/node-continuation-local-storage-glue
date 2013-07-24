@@ -12,6 +12,7 @@ var fs              = require('fs')
 
 // CONSTANTS
 var FILENAME     = '__testfile'
+  , DIRNAME      = '__TESTDIR'
   , LINKNAME     = '__testlink'
   , HARDLINKNAME = '__testhardlink'
   ;
@@ -21,9 +22,7 @@ function createFile(assert) {
     , file     = fs.openSync(FILENAME, 'w')
     , written  = fs.writeSync(file, contents, 0, contents.length, 0)
     ;
-
   assert.equals(written, contents.length, "whole buffer was written");
-
   var rc = fs.closeSync(file);
   // need this here to avoid dealing with umask complications
   fs.chmodSync(FILENAME, '0666');
@@ -35,16 +34,22 @@ function deleteFile() { return fs.unlinkSync(FILENAME); }
 
 function createLink(assert) {
   createFile(assert);
-
   fs.symlinkSync(FILENAME, LINKNAME);
   fs.lchmodSync(LINKNAME, '0777');
 }
 
 function deleteLink() {
   fs.unlinkSync(LINKNAME);
-
   return deleteFile();
 }
+
+
+function createDirectory(assert) {
+  fs.mkdirSync(DIRNAME);
+  assert.ok(fs.existsSync(DIRNAME), "directory was created");
+}
+
+function deleteDirectory() { return fs.rmdirSync(DIRNAME); }
 
 
 function mapIds(username, groupname, callback) {
@@ -68,7 +73,7 @@ function mapIds(username, groupname, callback) {
 }
 
 test("continuation-local state with MakeCallback and fs module", function (t) {
-  t.plan(16);
+  t.plan(20);
 
   var namespace = createNamespace('fs');
   namespace.set('test', 0xabad1dea);
@@ -451,10 +456,106 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
     });
   });
 
-  // TODO: 'realpath'
-  // TODO: 'mkdir'
-  // TODO: 'rmdir'
-  // TODO: 'readdir'
+  t.test("fs.realpath", function (t) {
+    createFile(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'realpath');
+      t.equal(namespace.get('test'), 'realpath', "state has been mutated");
+
+      fs.realpath(FILENAME, function (error, real) {
+        t.notOk(error, "deleting file shouldn't error");
+
+        t.equal(namespace.get('test'), 'realpath',
+                "mutated state has persisted to fs.realpath's callback");
+
+        t.equal(real, path.resolve(FILENAME), "no funny business with the real path");
+
+        deleteFile();
+        t.end();
+      });
+    });
+  });
+
+  t.test("fs.mkdir", function (t) {
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'mkdir');
+      t.equal(namespace.get('test'), 'mkdir', "state has been mutated");
+
+      fs.mkdir(DIRNAME, function (error) {
+        t.notOk(error, "creating directory shouldn't error");
+
+        t.equal(namespace.get('test'), 'mkdir',
+                "mutated state has persisted to fs.mkdir's callback");
+
+        t.ok(fs.existsSync(DIRNAME), "directory was created");
+
+        fs.rmdirSync(DIRNAME);
+        t.end();
+      });
+    });
+  });
+
+  t.test("fs.rmdir", function (t) {
+    createDirectory(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'rmdir');
+      t.equal(namespace.get('test'), 'rmdir', "state has been mutated");
+
+      fs.rmdir(DIRNAME, function (error) {
+        t.notOk(error, "deleting directory shouldn't error");
+
+        t.equal(namespace.get('test'), 'rmdir',
+                "mutated state has persisted to fs.rmdir's callback");
+
+        t.notOk(fs.existsSync(DIRNAME), "directory was removed");
+
+        t.end();
+      });
+    });
+  });
+
+  t.test("fs.readdir", function (t) {
+    createDirectory(t);
+
+    var file1 = fs.openSync(path.join(DIRNAME, 'file1'), 'w');
+    fs.writeSync(file1, 'one');
+    fs.closeSync(file1);
+
+    var file2 = fs.openSync(path.join(DIRNAME, 'file2'), 'w');
+    fs.writeSync(file2, 'two');
+    fs.closeSync(file2);
+
+    var file3 = fs.openSync(path.join(DIRNAME, 'file3'), 'w');
+    fs.writeSync(file3, 'three');
+    fs.closeSync(file3);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'readdir');
+      t.equal(namespace.get('test'), 'readdir', "state has been mutated");
+
+      fs.readdir(DIRNAME, function (error, contents) {
+        t.notOk(error, "reading directory shouldn't error");
+
+        t.equal(namespace.get('test'), 'readdir',
+                "mutated state has persisted to fs.readdir's callback");
+
+        t.equal(contents.length, 3, "3 files were found");
+
+        fs.unlinkSync(path.join(DIRNAME, 'file1'));
+        fs.unlinkSync(path.join(DIRNAME, 'file2'));
+        fs.unlinkSync(path.join(DIRNAME, 'file3'));
+        deleteDirectory();
+        t.end();
+      });
+    });
+  });
+
   // TODO: 'watch'
   // TODO: 'watchFile'
   // TODO: 'unwatchFile'
