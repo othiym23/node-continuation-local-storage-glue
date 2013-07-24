@@ -24,7 +24,7 @@ function createFile(assert) {
 
   var rc = fs.closeSync(file);
   // need this here to avoid dealing with umask complications
-  fs.chmod(FILENAME, '0666');
+  fs.chmodSync(FILENAME, '0666');
   return rc;
 }
 
