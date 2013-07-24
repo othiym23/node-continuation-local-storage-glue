@@ -3,6 +3,7 @@
 require('../bootstrap.js');
 
 var fs              = require('fs')
+  , path            = require('path')
   , exec            = require('child_process').exec
   , tap             = require('tap')
   , test            = tap.test
@@ -10,8 +11,9 @@ var fs              = require('fs')
   ;
 
 // CONSTANTS
-var FILENAME = '__testfile'
-  , LINKNAME = '__testlink'
+var FILENAME     = '__testfile'
+  , LINKNAME     = '__testlink'
+  , HARDLINKNAME = '__testhardlink'
   ;
 
 function createFile(assert) {
@@ -66,7 +68,7 @@ function mapIds(username, groupname, callback) {
 }
 
 test("continuation-local state with MakeCallback and fs module", function (t) {
-  t.plan(12);
+  t.plan(16);
 
   var namespace = createNamespace('fs');
   namespace.set('test', 0xabad1dea);
@@ -357,25 +359,113 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
     });
   });
 
-  // TODO: 'link'
-  // TODO: 'unlink'
-  // TODO: 'symlink'
-  // TODO: 'readlink'
+  t.test("fs.link", function (t) {
+    createFile(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'link');
+      t.equal(namespace.get('test'), 'link', "state has been mutated");
+
+      fs.link(FILENAME, HARDLINKNAME, function (error) {
+        t.notOk(error, "creating a link shouldn't error");
+
+        t.equal(namespace.get('test'), 'link',
+                "mutated state has persisted to fs.link's callback");
+
+        var orig   = fs.statSync(FILENAME)
+          , linked = fs.statSync(HARDLINKNAME)
+          ;
+        t.equal(orig.ino, linked.ino, "entries should point to same file");
+
+        t.notOk(fs.unlinkSync(HARDLINKNAME), "link has been removed");
+        deleteFile();
+        t.end();
+      });
+    });
+  });
+
+  t.test("fs.symlink", function (t) {
+    createFile(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'symlink');
+      t.equal(namespace.get('test'), 'symlink', "state has been mutated");
+
+      fs.symlink(FILENAME, LINKNAME, function (error) {
+        t.notOk(error, "creating a symlink shouldn't error");
+
+        t.equal(namespace.get('test'), 'symlink',
+                "mutated state has persisted to fs.symlink's callback");
+
+        var pointed = fs.readlinkSync(LINKNAME);
+        t.equal(pointed, FILENAME, "symlink points back to original file");
+
+        t.notOk(fs.unlinkSync(LINKNAME), "symlink has been removed");
+        deleteFile();
+        t.end();
+      });
+    });
+  });
+
+  t.test("fs.readlink", function (t) {
+    createLink(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'readlink');
+      t.equal(namespace.get('test'), 'readlink', "state has been mutated");
+
+      fs.readlink(LINKNAME, function (error, pointed) {
+        t.notOk(error, "reading symlink shouldn't error");
+
+        t.equal(namespace.get('test'), 'readlink',
+                "mutated state has persisted to fs.readlink's callback");
+
+        t.equal(pointed, FILENAME, "symlink points back to original file");
+
+        deleteLink();
+        t.end();
+      });
+    });
+  });
+
+  t.test("fs.unlink", function (t) {
+    createFile(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'unlink');
+      t.equal(namespace.get('test'), 'unlink', "state has been mutated");
+
+      fs.unlink(FILENAME, function (error) {
+        t.notOk(error, "deleting file shouldn't error");
+
+        t.equal(namespace.get('test'), 'unlink',
+                "mutated state has persisted to fs.unlink's callback");
+
+        t.notOk(path.exists(FILENAME), "file should be gone");
+        t.end();
+      });
+    });
+  });
+
   // TODO: 'realpath'
-  // TODO: 'rmdir'
   // TODO: 'mkdir'
+  // TODO: 'rmdir'
   // TODO: 'readdir'
-  // TODO: 'close'
-  // TODO: 'open'
+  // TODO: 'watch'
+  // TODO: 'watchFile'
+  // TODO: 'unwatchFile'
   // TODO: 'utimes'
   // TODO: 'futimes'
   // TODO: 'fsync'
-  // TODO: 'write'
+  // TODO: 'open'
+  // TODO: 'close'
   // TODO: 'read'
+  // TODO: 'write'
   // TODO: 'readFile'
   // TODO: 'writeFile'
   // TODO: 'appendFile'
-  // TODO: 'watchFile'
-  // TODO: 'watch'
-  // TODO: 'unwatchFile'
 });
