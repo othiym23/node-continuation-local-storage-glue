@@ -29,6 +29,6 @@ test("patching the guts of EventEmitters", function (t) {
 
   var ee = new EventEmitter();
   ee.domain = "patchtest";
-  t.equal(domainspace.active.get("domain"), "patchtest",
+  t.equal(domainspace.get("domain"), "patchtest",
          "domain should be set on the namespace now");
 });
