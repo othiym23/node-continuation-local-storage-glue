@@ -81,8 +81,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.rename", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'rename');
       t.equal(namespace.get('test'), 'rename', "state has been mutated");
 
@@ -100,8 +99,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.truncate", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.ext.run(function () {
       namespace.set('test', 'truncate');
       t.equal(namespace.get('test'), 'truncate', "state has been mutated");
 
@@ -123,8 +121,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.ftruncate", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'ftruncate');
       t.equal(namespace.get('test'), 'ftruncate', "state has been mutated");
 
@@ -153,8 +150,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
       t.ok(uid, "uid for daemon was found");
       t.ok(gid, "gid for daemon was found");
 
-      var context = namespace.createContext();
-      context.run(function () {
+      namespace.run(function () {
         namespace.set('test', 'chown');
         t.equal(namespace.get('test'), 'chown', "state has been mutated");
 
@@ -179,8 +175,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
       t.ok(uid, "uid for daemon was found");
       t.ok(gid, "gid for daemon was found");
 
-      var context = namespace.createContext();
-      context.run(function () {
+      namespace.run(function () {
         namespace.set('test', 'fchown');
         t.equal(namespace.get('test'), 'fchown', "state has been mutated");
 
@@ -207,8 +202,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
       t.ok(uid, "uid for daemon was found");
       t.ok(gid, "gid for daemon was found");
 
-      var context = namespace.createContext();
-      context.run(function () {
+      namespace.run(function () {
         namespace.set('test', 'lchown');
         t.equal(namespace.get('test'), 'lchown', "state has been mutated");
 
@@ -228,8 +222,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.chmod", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'chmod');
       t.equal(namespace.get('test'), 'chmod', "state has been mutated");
 
@@ -251,8 +244,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.fchmod", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'fchmod');
       t.equal(namespace.get('test'), 'fchmod', "state has been mutated");
 
@@ -276,8 +268,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.lchmod", function (t) {
     createLink(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'lchmod');
       t.equal(namespace.get('test'), 'lchmod', "state has been mutated");
 
@@ -299,8 +290,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.stat", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'stat');
       t.equal(namespace.get('test'), 'stat', "state has been mutated");
 
@@ -321,8 +311,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.fstat", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'fstat');
       t.equal(namespace.get('test'), 'fstat', "state has been mutated");
 
@@ -345,8 +334,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.lstat", function (t) {
     createLink(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'lstat');
       t.equal(namespace.get('test'), 'lstat', "state has been mutated");
 
@@ -367,8 +355,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.link", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'link');
       t.equal(namespace.get('test'), 'link', "state has been mutated");
 
@@ -393,8 +380,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.symlink", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'symlink');
       t.equal(namespace.get('test'), 'symlink', "state has been mutated");
 
@@ -417,8 +403,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.readlink", function (t) {
     createLink(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'readlink');
       t.equal(namespace.get('test'), 'readlink', "state has been mutated");
 
@@ -439,8 +424,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.unlink", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'unlink');
       t.equal(namespace.get('test'), 'unlink', "state has been mutated");
 
@@ -459,8 +443,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.realpath", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'realpath');
       t.equal(namespace.get('test'), 'realpath', "state has been mutated");
 
@@ -479,8 +462,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   });
 
   t.test("fs.mkdir", function (t) {
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'mkdir');
       t.equal(namespace.get('test'), 'mkdir', "state has been mutated");
 
@@ -501,8 +483,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.rmdir", function (t) {
     createDirectory(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'rmdir');
       t.equal(namespace.get('test'), 'rmdir', "state has been mutated");
 
@@ -534,8 +515,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
     fs.writeSync(file3, 'three');
     fs.closeSync(file3);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'readdir');
       t.equal(namespace.get('test'), 'readdir', "state has been mutated");
 
@@ -559,8 +539,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.watch", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'watch');
       t.equal(namespace.get('test'), 'watch', "state has been mutated");
 
@@ -588,8 +567,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.watchFile", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'watchFile');
       t.equal(namespace.get('test'), 'watchFile', "state has been mutated");
 
@@ -623,8 +601,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
      */
     var PASTIME = new Date(Math.floor((Date.now() - 31337) / 1000) * 1000);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'utimes');
       t.equal(namespace.get('test'), 'utimes', "state has been mutated");
 
@@ -658,8 +635,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
      */
     var PASTIME = new Date(Math.floor((Date.now() - 0xb33fd) / 1000) * 1000);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'futimes');
       t.equal(namespace.get('test'), 'futimes', "state has been mutated");
 
@@ -690,8 +666,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.fsync", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'fsync');
       t.equal(namespace.get('test'), 'fsync', "state has been mutated");
 
@@ -712,8 +687,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.open", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'open');
       t.equal(namespace.get('test'), 'open', "state has been mutated");
 
@@ -738,8 +712,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.close", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'close');
       t.equal(namespace.get('test'), 'close', "state has been mutated");
 
@@ -759,8 +732,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.read", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'read');
       t.equal(namespace.get('test'), 'read', "state has been mutated");
 
@@ -785,8 +757,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.write", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'write');
       t.equal(namespace.get('test'), 'write', "state has been mutated");
 
@@ -813,8 +784,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.readFile", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'readFile');
       t.equal(namespace.get('test'), 'readFile', "state has been mutated");
 
@@ -835,8 +805,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.writeFile", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'writeFile');
       t.equal(namespace.get('test'), 'writeFile', "state has been mutated");
 
@@ -858,8 +827,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.appendFile", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'appendFile');
       t.equal(namespace.get('test'), 'appendFile', "state has been mutated");
 
@@ -881,8 +849,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.exists", function (t) {
     createFile(t);
 
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'exists');
       t.equal(namespace.get('test'), 'exists', "state has been mutated");
 
