@@ -1,6 +1,6 @@
 'use strict';
 
-var context  = require('continuation-local-storage')
+var cls  = require('continuation-local-storage')
   , domain   = require('domain')
   , shimmer  = require('shimmer')
   , wrap     = shimmer.wrap
@@ -8,76 +8,66 @@ var context  = require('continuation-local-storage')
   ;
 
 var slice = [].slice;
+function each(obj, callback) {
+  var keys = Object.keys(obj);
+  for (var i = 0, l = keys.length; i < l; ++i) {
+    var key = keys[i];
+    callback(key, obj[key]);
+  }
+}
 
-/**
- * Save the active domains for later lookup in a subsequent turn of the
- * event loop.
- *
- * WARNING:
- *
- * It's not safe to do I/O in this function because it's happening inside
- * the bits of the event loop that manage the event loop. You can try,
- * you'll just get a guaranteed RangeError in 0.10.x
- */
-function copyContexts(current, target) {
-  if (!target) return;
-
-  // good luck adding logging to this function
-  var actives = Object.create(null);
-  Object.keys(current).forEach(function (namespace) {
-    actives[namespace] = namespace.active;
+function wrapCallback(callback) {
+  // Get the currently active contexts in all the namespaces.
+  var contexts = {};
+  each(process.namespaces, function (name, namespace) {
+    contexts[name] = namespace.active;
   });
-  target.__actives = actives;
 
-  return actives;
-}
-
-function getContexts(target) {
-  if (!target) return;
-  if (!target.__actives) throw new Error("No active namespaces to restore.");
-
-  return target.__actives;
-}
-
-function enterContexts(contexts) {
-  if (!(contexts && Array.isArray(contexts))) return;
-
-  contexts.forEach(function (context) {
-    context.enter();
-  });
-}
-
-function exitContexts(contexts) {
-  if (!(contexts && Array.isArray(contexts))) return;
-
-  contexts.forEach(function (context) {
-    context.exit();
-  });
-}
-
-/**
- * Make sure that active contexts are captured during turnings of the event loop.
- *
- * FIXME: may not be necessary (WIP)
- * FIXME: clearly not doing the right thing for things containing Timers
- */
-function activator(propagator) {
+  // Return a callback that enters all the saved namespaces when called.
   return function () {
-    copyContexts(process.namespaces, this);
+    var namespaces = process.namespaces;
+    each(contexts, function (name, context) {
+      namespaces[name].enter(context);
+    });
+    var result = callback.apply(this, arguments);
+    each(contexts, function (name, context) {
+      namespaces[name].exit(context);
+    });
+    return result;
+  };
+}
 
-    // FIXME: this is in major need of refactoring out
+// Shim activator for functions that have callback last
+function activator(fn) {
+  return function () {
     var args = slice.call(arguments);
     var callback = args[args.length - 1];
-    if (typeof callback === 'function') {
-      args[args.length - 1] = function () {
-        var contexts = getContexts(this);
-        enterContexts(contexts);
-        callback.apply(this, arguments);
-        exitContexts(contexts);
-      }.bind(this);
+
+    // If there is no callback, there will be no continuation to trap.
+    if (typeof callback !== "function") {
+      return fn.apply(this, arguments);
     }
 
-    return propagator.apply(this, args);
+    // Wrap the callback so that the continuation keeps the current contexts.
+    args[args.length - 1] = wrapCallback(callback);
+    return fn.apply(this, args);
+  };
+}
+
+// Shim activator for functions that have callback first
+function activatorFirst(fn) {
+  return function () {
+    var args = slice.call(arguments);
+    var callback = args[0];
+
+    // If there is no callback, there will be no continuation to trap.
+    if (typeof callback !== "function") {
+      return fn.apply(this, arguments);
+    }
+
+    // Wrap the callback so that the continuation keeps the current contexts.
+    args[0] = wrapCallback(callback);
+    return fn.apply(this, args);
   };
 }
 
@@ -98,7 +88,7 @@ massWrap(
     'setInterval',
     'setImmediate'
   ],
-  activator
+  activatorFirst
 );
 
 massWrap(
@@ -162,7 +152,7 @@ massWrap(
 /**
  * Set up a new substrate for domains (eventually will replace / be aliased to domains)
  */
-var domainspace = context.createNamespace('__core_domain');
+var domainspace = cls.createNamespace('__core_domain');
 function namespacer(domainConstructor) {
   return function () {
     var returned = domainConstructor.apply(this, arguments);
