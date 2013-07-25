@@ -73,7 +73,7 @@ function mapIds(username, groupname, callback) {
 }
 
 test("continuation-local state with MakeCallback and fs module", function (t) {
-  t.plan(22);
+  t.plan(24);
 
   var namespace = createNamespace('fs');
   namespace.set('test', 0xabad1dea);
@@ -615,8 +615,78 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
     });
   });
 
-  // TODO: 'utimes'
-  // TODO: 'futimes'
+  t.test("fs.utimes", function (t) {
+    createFile(t);
+
+    /* utimes(2) takes seconds since the epoch, and Date() deals with
+     * milliseconds. I just want a date some time in the past.
+     */
+    var PASTIME = new Date(Math.floor((Date.now() - 31337) / 1000) * 1000);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'utimes');
+      t.equal(namespace.get('test'), 'utimes', "state has been mutated");
+
+      var before = fs.statSync(FILENAME);
+      t.ok(before.atime, "access time of newly-created file set");
+      t.ok(before.mtime, "modification time of newly-created file set");
+
+      fs.utimes(FILENAME, PASTIME, PASTIME, function (error) {
+        t.notOk(error, "setting utimes shouldn't error");
+
+        t.equal(namespace.get('test'), 'utimes',
+                "mutated state has persisted to fs.utimes's callback");
+
+        var after = fs.statSync(FILENAME);
+        t.deepEqual(after.atime, PASTIME, "access time of newly-created file is reset");
+        t.deepEqual(after.mtime, PASTIME, "mod time of newly-created file is reset");
+        t.notDeepEqual(before.atime, after.atime, "access time changed");
+        t.notDeepEqual(before.mtime, after.mtime, "mod time changed");
+
+        deleteFile();
+        t.end();
+      });
+    });
+  });
+
+  t.test("fs.futimes", function (t) {
+    createFile(t);
+
+    /* futimes(2) takes seconds since the epoch, and Date() deals with
+     * milliseconds. I just want a date some time in the past.
+     */
+    var PASTIME = new Date(Math.floor((Date.now() - 0xb33fd) / 1000) * 1000);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'futimes');
+      t.equal(namespace.get('test'), 'futimes', "state has been mutated");
+
+      var before = fs.statSync(FILENAME);
+      t.ok(before.atime, "access time of newly-created file set");
+      t.ok(before.mtime, "modification time of newly-created file set");
+
+      var file = fs.openSync(FILENAME, "w+");
+      fs.futimes(file, PASTIME, PASTIME, function (error) {
+        t.notOk(error, "setting futimes shouldn't error");
+        fs.closeSync(file);
+
+        t.equal(namespace.get('test'), 'futimes',
+                "mutated state has persisted to fs.futimes's callback");
+
+        var after = fs.statSync(FILENAME);
+        t.deepEqual(after.atime, PASTIME, "access time of newly-created file is reset");
+        t.deepEqual(after.mtime, PASTIME, "mod time of newly-created file is reset");
+        t.notDeepEqual(before.atime, after.atime, "access time changed");
+        t.notDeepEqual(before.mtime, after.mtime, "mod time changed");
+
+        deleteFile();
+        t.end();
+      });
+    });
+  });
+
   // TODO: 'fsync'
   // TODO: 'open'
   // TODO: 'close'
