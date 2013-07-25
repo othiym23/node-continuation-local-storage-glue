@@ -25,7 +25,7 @@
     "tap": "~0.4.3"
   },
   "dependencies": {
-    "continuation-local-storage": "0.1.1",
+    "continuation-local-storage": "~1",
     "shimmer": "0.7.x"
   }
 }
