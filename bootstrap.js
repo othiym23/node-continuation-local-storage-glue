@@ -143,6 +143,7 @@ massWrap(
     'appendFile',
     'watchFile',
     'unwatchFile',
+    "exists",
   ],
   activator
 );
