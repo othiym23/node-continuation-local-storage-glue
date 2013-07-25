@@ -35,7 +35,10 @@ function deleteFile() { return fs.unlinkSync(FILENAME); }
 function createLink(assert) {
   createFile(assert);
   fs.symlinkSync(FILENAME, LINKNAME);
-  fs.lchmodSync(LINKNAME, '0777');
+  if (fs.lchmodSync) {
+    // This function only exists on BSD systems (like OSX)
+    fs.lchmodSync(LINKNAME, '0777');
+  }
 }
 
 function deleteLink() {
@@ -99,7 +102,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.truncate", function (t) {
     createFile(t);
 
-    namespace.ext.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'truncate');
       t.equal(namespace.get('test'), 'truncate', "state has been mutated");
 
@@ -195,6 +198,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   });
 
   t.test("fs.lchown", function (t) {
+    if (!fs.lchown) return t.end();
     createLink(t);
 
     mapIds('daemon', 'daemon', function (error, uid, gid) {
@@ -266,6 +270,7 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   });
 
   t.test("fs.lchmod", function (t) {
+    if (!fs.lchmod) return t.end();
     createLink(t);
 
     namespace.run(function () {

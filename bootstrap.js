@@ -118,10 +118,8 @@ massWrap(
     'truncate',
     'chown',
     'fchown',
-    'lchown',
     'chmod',
     'fchmod',
-    'lchmod',
     'stat',
     'lstat',
     'fstat',
@@ -148,6 +146,18 @@ massWrap(
   ],
   activator
 );
+
+// Only wrap lchown and lchmod on systems that have them.
+if (require('fs').lchown) {
+  massWrap(
+    require('fs'),
+    [
+      'lchown',
+      'lchmod',
+    ],
+    activator
+  );
+}
 
 /**
  * Set up a new substrate for domains (eventually will replace / be aliased to domains)
