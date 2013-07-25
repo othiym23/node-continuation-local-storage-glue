@@ -15,8 +15,7 @@ test("continuation-local state with MakeCallback and DNS module", function (t) {
   namespace.set('test', 0xabad1dea);
 
   t.test("dns.lookup", function (t) {
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 808);
       t.equal(namespace.get('test'), 808, "state has been mutated");
 
@@ -33,8 +32,7 @@ test("continuation-local state with MakeCallback and DNS module", function (t) {
   });
 
   t.test("dns.resolve", function (t) {
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 909);
       t.equal(namespace.get('test'), 909, "state has been mutated");
 
@@ -51,8 +49,7 @@ test("continuation-local state with MakeCallback and DNS module", function (t) {
   });
 
   t.test("dns.resolve4", function (t) {
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 303);
       t.equal(namespace.get('test'), 303, "state has been mutated");
 
@@ -69,8 +66,7 @@ test("continuation-local state with MakeCallback and DNS module", function (t) {
   });
 
   t.test("dns.resolve6", function (t) {
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 101);
       t.equal(namespace.get('test'), 101, "state has been mutated");
 
@@ -87,8 +83,7 @@ test("continuation-local state with MakeCallback and DNS module", function (t) {
   });
 
   t.test("dns.resolveCname", function (t) {
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 212);
       t.equal(namespace.get('test'), 212, "state has been mutated");
 
@@ -105,8 +100,7 @@ test("continuation-local state with MakeCallback and DNS module", function (t) {
   });
 
   t.test("dns.resolveMx", function (t) {
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 707);
       t.equal(namespace.get('test'), 707, "state has been mutated");
 
@@ -123,8 +117,7 @@ test("continuation-local state with MakeCallback and DNS module", function (t) {
   });
 
   t.test("dns.resolveNs", function (t) {
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 717);
       t.equal(namespace.get('test'), 717, "state has been mutated");
 
@@ -141,8 +134,7 @@ test("continuation-local state with MakeCallback and DNS module", function (t) {
   });
 
   t.test("dns.resolveTxt", function (t) {
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 2020);
       t.equal(namespace.get('test'), 2020, "state has been mutated");
 
@@ -159,8 +151,7 @@ test("continuation-local state with MakeCallback and DNS module", function (t) {
   });
 
   t.test("dns.resolveSrv", function (t) {
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 9000);
       t.equal(namespace.get('test'), 9000, "state has been mutated");
 
@@ -177,8 +168,7 @@ test("continuation-local state with MakeCallback and DNS module", function (t) {
   });
 
   t.test("dns.resolveNaptr", function (t) {
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 'Polysix');
       t.equal(namespace.get('test'), 'Polysix', "state has been mutated");
 
@@ -195,8 +185,7 @@ test("continuation-local state with MakeCallback and DNS module", function (t) {
   });
 
   t.test("dns.reverse", function (t) {
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 1000);
       t.equal(namespace.get('test'), 1000, "state has been mutated");
 
