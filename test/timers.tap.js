@@ -14,8 +14,7 @@ test("continuation-local state with timers", function (t) {
   namespace.set('test', 0xabad1dea);
 
   t.test("process.nextTick", function (t) {
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 31337);
       t.equal(namespace.get('test'), 31337, "state has been mutated");
 
@@ -29,8 +28,7 @@ test("continuation-local state with timers", function (t) {
   });
 
   t.test("setImmediate", function (t) {
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 999);
       t.equal(namespace.get('test'), 999, "state has been mutated");
 
@@ -44,8 +42,7 @@ test("continuation-local state with timers", function (t) {
   });
 
   t.test("setTimeout", function (t) {
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 54321);
       t.equal(namespace.get('test'), 54321, "state has been mutated");
 
@@ -59,8 +56,7 @@ test("continuation-local state with timers", function (t) {
   });
 
   t.test("setInterval", function (t) {
-    var context = namespace.createContext();
-    context.run(function () {
+    namespace.run(function () {
       namespace.set('test', 10101);
       t.equal(namespace.get('test'), 10101, "continuation-local state has been mutated");
 
