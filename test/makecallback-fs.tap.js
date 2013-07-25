@@ -73,7 +73,7 @@ function mapIds(username, groupname, callback) {
 }
 
 test("continuation-local state with MakeCallback and fs module", function (t) {
-  t.plan(24);
+  t.plan(33);
 
   var namespace = createNamespace('fs');
   namespace.set('test', 0xabad1dea);
@@ -687,13 +687,221 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
     });
   });
 
-  // TODO: 'fsync'
-  // TODO: 'open'
-  // TODO: 'close'
-  // TODO: 'read'
-  // TODO: 'write'
-  // TODO: 'readFile'
-  // TODO: 'writeFile'
-  // TODO: 'appendFile'
-  // TODO: 'exists'
+  t.test("fs.fsync", function (t) {
+    createFile(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'fsync');
+      t.equal(namespace.get('test'), 'fsync', "state has been mutated");
+
+      var file = fs.openSync(FILENAME, 'w+');
+      fs.fsync(file, function (error) {
+        t.notOk(error, "syncing the file shouldn't error");
+
+        t.equal(namespace.get('test'), 'fsync',
+                "mutated state has persisted to fs.fsync's callback");
+
+        fs.closeSync(file);
+        deleteFile();
+        t.end();
+      });
+    });
+  });
+
+  t.test("fs.open", function (t) {
+    createFile(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'open');
+      t.equal(namespace.get('test'), 'open', "state has been mutated");
+
+      fs.open(FILENAME, 'r', function (error, file) {
+        t.notOk(error, "opening the file shouldn't error");
+
+        t.equal(namespace.get('test'), 'open',
+                "mutated state has persisted to fs.open's callback");
+
+
+        var contents = new Buffer(4);
+        fs.readSync(file, contents, 0, 4, 0);
+        t.equal(contents.toString(), 'UHOH', "contents are still available");
+
+        fs.closeSync(file);
+        deleteFile();
+        t.end();
+      });
+    });
+  });
+
+  t.test("fs.close", function (t) {
+    createFile(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'close');
+      t.equal(namespace.get('test'), 'close', "state has been mutated");
+
+      var file = fs.openSync(FILENAME, 'r');
+      fs.close(file, function (error) {
+        t.notOk(error, "closing the file shouldn't error");
+
+        t.equal(namespace.get('test'), 'close',
+                "mutated state has persisted to fs.close's callback");
+
+        deleteFile();
+        t.end();
+      });
+    });
+  });
+
+  t.test("fs.read", function (t) {
+    createFile(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'read');
+      t.equal(namespace.get('test'), 'read', "state has been mutated");
+
+      var file     = fs.openSync(FILENAME, 'r')
+        , contents = new Buffer(4)
+        ;
+      fs.read(file, contents, 0, 4, 0, function (error) {
+        t.notOk(error, "reading from the file shouldn't error");
+
+        t.equal(namespace.get('test'), 'read',
+                "mutated state has persisted to fs.read's callback");
+
+        t.equal(contents.toString(), 'UHOH', "contents are still available");
+
+        fs.closeSync(file);
+        deleteFile();
+        t.end();
+      });
+    });
+  });
+
+  t.test("fs.write", function (t) {
+    createFile(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'write');
+      t.equal(namespace.get('test'), 'write', "state has been mutated");
+
+      var file     = fs.openSync(FILENAME, 'w')
+        , contents = new Buffer('yeap')
+        ;
+      fs.write(file, contents, 0, 4, 0, function (error) {
+        t.notOk(error, "writing to the file shouldn't error");
+
+        t.equal(namespace.get('test'), 'write',
+                "mutated state has persisted to fs.write's callback");
+
+        fs.closeSync(file);
+
+        var readback = fs.readFileSync(FILENAME);
+        t.equal(readback.toString(), 'yeap', "contents are still available");
+
+        deleteFile();
+        t.end();
+      });
+    });
+  });
+
+  t.test("fs.readFile", function (t) {
+    createFile(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'readFile');
+      t.equal(namespace.get('test'), 'readFile', "state has been mutated");
+
+      fs.readFile(FILENAME, function (error, contents) {
+        t.notOk(error, "reading from the file shouldn't error");
+
+        t.equal(namespace.get('test'), 'readFile',
+                "mutated state has persisted to fs.readFile's callback");
+
+        t.equal(contents.toString(), 'UHOH', "contents are still available");
+
+        deleteFile();
+        t.end();
+      });
+    });
+  });
+
+  t.test("fs.writeFile", function (t) {
+    createFile(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'writeFile');
+      t.equal(namespace.get('test'), 'writeFile', "state has been mutated");
+
+      fs.writeFile(FILENAME, 'woopwoop', function (error) {
+        t.notOk(error, "rewriting the file shouldn't error");
+
+        t.equal(namespace.get('test'), 'writeFile',
+                "mutated state has persisted to fs.writeFile's callback");
+
+        var readback = fs.readFileSync(FILENAME);
+        t.equal(readback.toString(), 'woopwoop', "rewritten contents are available");
+
+        deleteFile();
+        t.end();
+      });
+    });
+  });
+
+  t.test("fs.appendFile", function (t) {
+    createFile(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'appendFile');
+      t.equal(namespace.get('test'), 'appendFile', "state has been mutated");
+
+      fs.appendFile(FILENAME, '/jk', function (error) {
+        t.notOk(error, "appending to the file shouldn't error");
+
+        t.equal(namespace.get('test'), 'appendFile',
+                "mutated state has persisted to fs.appendFile's callback");
+
+        var readback = fs.readFileSync(FILENAME);
+        t.equal(readback.toString(), 'UHOH/jk', "appended contents are still available");
+
+        deleteFile();
+        t.end();
+      });
+    });
+  });
+
+  t.test("fs.exists", function (t) {
+    createFile(t);
+
+    var context = namespace.createContext();
+    context.run(function () {
+      namespace.set('test', 'exists');
+      t.equal(namespace.get('test'), 'exists', "state has been mutated");
+
+      fs.exists(FILENAME, function (yep) {
+        t.equal(namespace.get('test'), 'exists',
+                "mutated state has persisted to fs.exists's callback");
+
+        t.ok(yep, "precreated file does indeed exist.");
+
+        fs.exists('NOPENOWAY', function (nope) {
+          t.equal(namespace.get('test'), 'exists',
+                  "mutated state continues to persist to fs.exists's second callback");
+
+          t.notOk(nope, "nonexistent file doesn't exist.");
+
+          deleteFile();
+          t.end();
+        });
+      });
+    });
+  });
 });
