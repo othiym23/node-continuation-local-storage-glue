@@ -157,7 +157,7 @@ function namespacer(domainConstructor) {
   return function () {
     var returned = domainConstructor.apply(this, arguments);
     returned.__NAMESPACE = domainspace;
-    this.__context = domainspace.createContext("domain");
+    this.__context = domainspace.active;
 
     return returned;
   };
