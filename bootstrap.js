@@ -109,8 +109,9 @@ massWrap(
   activator
 );
 
+var fs = require('fs');
 massWrap(
-  require('fs'),
+  fs,
   [
     'watch',
     'rename',
@@ -148,17 +149,9 @@ massWrap(
   activator
 );
 
-// Only wrap lchown and lchmod on systems that have them.
-if (require('fs').lchown) {
-  massWrap(
-    require('fs'),
-    [
-      'lchown',
-      'lchmod',
-    ],
-    activator
-  );
-}
+// only wrap lchown and lchmod on systems that have them.
+if (fs.lchown) wrap(fs, 'lchown', activator);
+if (fs.lchmod) wrap(fs, 'lchmod', activator);
 
 /**
  * Set up a new substrate for domains (eventually will replace / be aliased to domains)
