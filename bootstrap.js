@@ -172,23 +172,4 @@ wrap(domain, 'createDomain', namespacer);
 
 
 // PUBLIC API STARTS HERE: there isn't much of one
-module.exports = {
-  /* If you call this, you have greater faith in my code than I do.
-   * Mostly here for testing.
-   */
-  // on second thought, this is a bad idea
-  // FIXME: re-add this when we have all the pieces in place
-  // stop : function () {
-  //   unwrap(domain, 'create');
-  //   unwrap(domain, 'createDomain');
-  //   unwrap(process, 'nextTick');
-  //   unwrap(process, '_nextDomainTick');
-  //   unwrap(process, '_tickDomainCallback');
-  //   unwrap(global, 'setTimeout');
-  //   unwrap(global, 'setInterval');
-  //   unwrap(global, 'setImmediate');
-  //   unwrap(timers, 'setTimeout');
-  //   unwrap(timers, 'setInterval');
-  //   unwrap(timers, 'setImmediate');
-  // }
-};
+module.exports = cls;
