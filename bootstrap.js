@@ -29,11 +29,14 @@ function wrapCallback(callback) {
     each(contexts, function (name, context) {
       namespaces[name].enter(context);
     });
-    var result = callback.apply(this, arguments);
-    each(contexts, function (name, context) {
-      namespaces[name].exit(context);
-    });
-    return result;
+    try {
+      return callback.apply(this, arguments);
+    }
+    finally {
+      each(contexts, function (name, context) {
+        namespaces[name].exit(context);
+      });
+    }
   };
 }
 
