@@ -43,6 +43,9 @@ function wrapCallback(callback) {
 var net = require('net');
 wrap(net.Server.prototype, "_listen2", function (original) {
   return function () {
+    this.on("connection", function (socket) {
+      socket._handle.onread = wrapCallback(socket._handle.onread);
+    });
     var result = original.apply(this, arguments);
     this._handle.onconnection = wrapCallback(this._handle.onconnection);
     return result;

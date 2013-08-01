@@ -9,7 +9,7 @@ var net             = require('net')
   ;
 
 test("continuation-local state with net connection", function (t) {
-  t.plan(1);
+  t.plan(2);
 
   var namespace = createNamespace('net');
   namespace.set('test', 0xabad1dea);
@@ -20,14 +20,17 @@ test("continuation-local state with net connection", function (t) {
 
     server = net.createServer(function (socket) {
       t.equal(namespace.get('test'), 0x1337, "state has been mutated");
-      t.end();
-      server.close();
-      socket.end()
+      socket.on("data", function (chunk) {
+        t.equal(namespace.get('test'), 0x1337, "state is still preserved");
+        t.end();
+        server.close();
+        socket.end()
+      });
     });
     server.listen(function () {
       var address = server.address();
       var client = net.connect(address.port, function () {
-        client.end();
+        client.write("Hello");
       });
     });
   });
