@@ -52,6 +52,16 @@ wrap(net.Server.prototype, "_listen2", function (original) {
   };
 });
 
+wrap(net.Socket.prototype, "connect", function (original) {
+  return function () {
+    var args = net._normalizeConnectArgs(arguments);
+    if (args[1]) args[1] = wrapCallback(args[1]);
+    var result = original.apply(this, args);
+    this._handle.onread = wrapCallback(this._handle.onread);
+    return result;
+  };
+});
+
 // Shim activator for functions that have callback last
 function activator(fn) {
   return function () {
