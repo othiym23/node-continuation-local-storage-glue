@@ -9,7 +9,7 @@ var net             = require('net')
   ;
 
 test("continuation-local state with net connection", function (t) {
-  t.plan(2);
+  t.plan(4);
 
   var namespace = createNamespace('net');
   namespace.set('test', 0xabad1dea);
@@ -22,15 +22,22 @@ test("continuation-local state with net connection", function (t) {
       t.equal(namespace.get('test'), 0x1337, "state has been mutated");
       socket.on("data", function (chunk) {
         t.equal(namespace.get('test'), 0x1337, "state is still preserved");
-        t.end();
         server.close();
-        socket.end()
+        socket.end("GoodBye");
       });
     });
     server.listen(function () {
       var address = server.address();
-      var client = net.connect(address.port, function () {
-        client.write("Hello");
+      namespace.run(function () {
+        namespace.set("test", "MONKEY");
+        var client = net.connect(address.port, function () {
+          t.equal(namespace.get("test"), "MONKEY", "state preserved for client connection");
+          client.write("Hello");
+          client.on("data", function (chunk) {
+            t.equal(namespace.get("test"), "MONKEY", "state preserved for client data");
+            t.end();
+          });
+        });
       });
     });
   });
