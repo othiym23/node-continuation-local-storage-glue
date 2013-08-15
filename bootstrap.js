@@ -1,7 +1,6 @@
 'use strict';
 
 var cls      = require('continuation-local-storage')
-  , domain   = require('domain')
   , shimmer  = require('shimmer')
   , wrap     = shimmer.wrap
   , massWrap = shimmer.massWrap
@@ -183,24 +182,6 @@ if (fs.lchmod) wrap(fs, 'lchmod', activator);
 
 // only wrap ftruncate in versions of node that have it
 if (fs.ftruncate) wrap(fs, 'ftruncate', activator);
-
-/**
- * Set up a new substrate for domains (eventually will replace / be aliased to domains)
- */
-var domainspace = cls.createNamespace('__core_domain');
-function namespacer(domainConstructor) {
-  return function () {
-    var returned = domainConstructor.apply(this, arguments);
-    returned.__NAMESPACE = domainspace;
-    this.__context = domainspace.active;
-
-    return returned;
-  };
-}
-
-wrap(domain, 'create', namespacer);
-wrap(domain, 'createDomain', namespacer);
-
 
 // PUBLIC API STARTS HERE: there isn't much of one
 module.exports = cls;
