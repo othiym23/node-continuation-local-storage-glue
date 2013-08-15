@@ -28,6 +28,9 @@ test("continuation-local state with timers", function (t) {
   });
 
   t.test("setImmediate", function (t) {
+    // setImmediate only in Node > 0.9.x
+    if (!global.setImmediate) return t.end();
+
     namespace.run(function () {
       namespace.set('test', 999);
       t.equal(namespace.get('test'), 999, "state has been mutated");

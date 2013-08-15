@@ -1,6 +1,6 @@
 'use strict';
 
-var cls  = require('continuation-local-storage')
+var cls      = require('continuation-local-storage')
   , domain   = require('domain')
   , shimmer  = require('shimmer')
   , wrap     = shimmer.wrap
@@ -96,28 +96,31 @@ function activatorFirst(fn) {
   };
 }
 
+var processors = ['nextTick'];
+if (process._nextDomainTick) processors.push('_nextDomainTick');
+if (process._tickDomainCallback) processors.push('_tickDomainCallback');
+
 massWrap(
   process,
-  [
-    'nextTick',
-    '_nextDomainTick',
-    '_tickDomainCallback'
-  ],
+  processors,
   activator
 );
 
+var asynchronizers = [
+  'setTimeout',
+  'setInterval'
+];
+if (global.setImmediate) asynchronizers.push('setImmediate');
+
 massWrap(
   [global, require('timers')],
-  [
-    'setTimeout',
-    'setInterval',
-    'setImmediate'
-  ],
+  asynchronizers,
   activatorFirst
 );
 
+var dns = require('dns');
 massWrap(
-  require('dns'),
+  dns,
   [
     'lookup',
     'resolve',
@@ -128,11 +131,12 @@ massWrap(
     'resolveNs',
     'resolveTxt',
     'resolveSrv',
-    'resolveNaptr',
     'reverse'
   ],
   activator
 );
+
+if (dns.resolveNaptr) wrap(dns, 'resolveNaptr', activator);
 
 var fs = require('fs');
 massWrap(
@@ -140,7 +144,6 @@ massWrap(
   [
     'watch',
     'rename',
-    'ftruncate',
     'truncate',
     'chown',
     'fchown',
@@ -177,6 +180,9 @@ massWrap(
 // only wrap lchown and lchmod on systems that have them.
 if (fs.lchown) wrap(fs, 'lchown', activator);
 if (fs.lchmod) wrap(fs, 'lchmod', activator);
+
+// only wrap ftruncate in versions of node that have it
+if (fs.ftruncate) wrap(fs, 'ftruncate', activator);
 
 /**
  * Set up a new substrate for domains (eventually will replace / be aliased to domains)

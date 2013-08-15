@@ -100,6 +100,9 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   });
 
   t.test("fs.truncate", function (t) {
+    // truncate -> ftruncate in Node > 0.8.x
+    if (!fs.ftruncate) return t.end();
+
     createFile(t);
 
     namespace.run(function () {
@@ -124,12 +127,15 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
   t.test("fs.ftruncate", function (t) {
     createFile(t);
 
+    // truncate -> ftruncate in Node > 0.8.x
+    var truncate = fs.ftruncate ? fs.ftruncate : fs.truncate;
+
     namespace.run(function () {
       namespace.set('test', 'ftruncate');
       t.equal(namespace.get('test'), 'ftruncate', "state has been mutated");
 
       var file = fs.openSync(FILENAME, 'w');
-      fs.ftruncate(file, 0, function (error) {
+      truncate(file, 0, function (error) {
         t.notOk(error, "truncation shouldn't error");
 
         fs.closeSync(file);
@@ -557,13 +563,13 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
         t.equal(event, 'change', "file was changed");
 
         watcher.close();
-        setImmediate(function cleanup() {
+        process.nextTick(function cleanup() {
           deleteFile();
           t.end();
         });
       });
 
-      setImmediate(function poke() {
+      process.nextTick(function poke() {
         fs.writeFileSync(FILENAME, 'still a test');
       });
     });
@@ -586,13 +592,13 @@ test("continuation-local state with MakeCallback and fs module", function (t) {
         t.equal(before.ino, after.ino, "file is at the same location");
 
         fs.unwatchFile(FILENAME);
-        setImmediate(function () {
+        process.nextTick(function () {
           deleteFile();
           t.end();
         });
       });
 
-      setImmediate(function poke() {
+      process.nextTick(function poke() {
         fs.writeFileSync(FILENAME, 'still a test');
       });
     });

@@ -22,7 +22,7 @@ test("continuation-local storage glue with a throw in the continuation chain",
     });
 
     // tap is only trying to help
-    setImmediate(d.bind(function () {
+    process.nextTick(d.bind(function () {
       t.ok(namespace.get('outer'), "outer mutation worked");
       t.notOk(namespace.get('inner'), "inner mutation hasn't happened yet");
 

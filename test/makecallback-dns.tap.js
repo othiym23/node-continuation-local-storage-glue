@@ -168,6 +168,9 @@ test("continuation-local state with MakeCallback and DNS module", function (t) {
   });
 
   t.test("dns.resolveNaptr", function (t) {
+    // dns.resolveNaptr only in Node > 0.9.x
+    if (!dns.resolveNaptr) return t.end();
+
     namespace.run(function () {
       namespace.set('test', 'Polysix');
       t.equal(namespace.get('test'), 'Polysix', "state has been mutated");
