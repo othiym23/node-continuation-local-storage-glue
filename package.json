@@ -1,6 +1,6 @@
 {
   "name": "continuation-local-storage-glue",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "https://github.com/joyent/node/issues/5243 used for domains",
   "main": "bootstrap.js",
   "scripts": {
