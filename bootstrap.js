@@ -168,64 +168,66 @@ function wrapCallback(original) {
                 : noWrap(original, list, length);
 }
 
-function catchyWrap(original, list, length) {
+function runSetup(list, length) {
   var data = new Array(length);
   for (var i = 0; i < length; ++i) {
     var listener = list[i];
     data[i] = listener.onAsync();
   }
+  return data;
+}
+
+function runBefore(data, list, length) {
+  for (var i = 0; i < length; ++i) {
+    var obj = list[i].callbackObject;
+    if (obj && obj.before) obj.before(data[i]);
+  }
+}
+
+function runError(data, list, length) {
+  for (i = 0; i < length; ++i) {
+    obj = list[i].callbackObject;
+    if (obj && obj.after) obj.after(data[i]);
+  }
+}
+
+function runAfter(data, list, length) {
+  var i, obj;
+  for (i = 0; i < length; ++i) {
+    obj = list[i].callbackObject;
+    if (obj && obj.after) obj.after(data[i]);
+  }
+  for (i = 0; i < length; ++i) {
+    obj = list[i].callbackObject;
+    if (obj && obj.done) obj.done(data[i]);
+  }
+}
+
+function catchyWrap(original, list, length) {
+  var data = runSetup(list, length);
   return function () {
-    var i, obj;
-    for (var i = 0; i < length; ++i) {
-      obj = list[i].callbackObject;
-      if (obj && obj.before) obj.before(data[i]);
-    }
+    runBefore(data, list, length);
     try {
       return original.apply(this, arguments);
     }
     catch (err) {
-      for (i = 0; i < length; ++i) {
-        obj = list[i].callbackObject;
-        if (obj && obj.after) obj.after(data[i]);
-      }
+      runError(data, list, length);
     }
     finally {
-      for (i = 0; i < length; ++i) {
-        obj = list[i].callbackObject;
-        if (obj && obj.after) obj.after(data[i]);
-      }
-      for (i = 0; i < length; ++i) {
-        obj = list[i].callbackObject;
-        if (obj && obj.done) obj.done(data[i]);
-      }
+      runAfter(data, list, length);
     }
   }
 }
 
 function normalWrap(original, list, length) {
-  var data = new Array(length);
-  for (var i = 0; i < length; ++i) {
-    var listener = list[i];
-    data[i] = listener.onAsync();
-  }
+  var data = runSetup(list, length);
   return function () {
-    var i, obj;
-    for (var i = 0; i < length; ++i) {
-      obj = list[i].callbackObject;
-      if (obj && obj.before) obj.before(data[i]);
-    }
+    runBefore(data, list, length);
     try {
       return original.apply(this, arguments);
     }
     finally {
-      for (i = 0; i < length; ++i) {
-        obj = list[i].callbackObject;
-        if (obj && obj.after) obj.after(data[i]);
-      }
-      for (i = 0; i < length; ++i) {
-        obj = list[i].callbackObject;
-        if (obj && obj.done) obj.done(data[i]);
-      }
+      runAfter(data, list, length);
     }
   }
 }
