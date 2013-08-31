@@ -1,6 +1,5 @@
 'use strict';
-
-require('../bootstrap.js');
+if (!process.addAsyncListener) require('../bootstrap.js');
 
 var net             = require('net')
   , tap             = require('tap')

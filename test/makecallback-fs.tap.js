@@ -1,6 +1,5 @@
 'use strict';
-
-require('../bootstrap.js');
+if (!process.addAsyncListener) require('../bootstrap.js');
 
 var fs              = require('fs')
   , path            = require('path')
