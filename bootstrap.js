@@ -1,43 +1,14 @@
 'use strict';
+if (process.addAsyncListener) {
+  throw new Error("Don't require polyfill unless needed");
+}
+process.addAsyncListener = addAsyncListener;
+var listeners = [];
 
-var cls      = require('continuation-local-storage')
-  , shimmer  = require('shimmer')
+var shimmer  = require('shimmer')
   , wrap     = shimmer.wrap
   , massWrap = shimmer.massWrap
   ;
-
-var slice = [].slice;
-function each(obj, callback) {
-  var keys = Object.keys(obj);
-  for (var i = 0, l = keys.length; i < l; ++i) {
-    var key = keys[i];
-    callback(key, obj[key]);
-  }
-}
-
-function wrapCallback(callback) {
-  // Get the currently active contexts in all the namespaces.
-  var contexts = {};
-  each(process.namespaces, function (name, namespace) {
-    contexts[name] = namespace.active;
-  });
-
-  // Return a callback that enters all the saved namespaces when called.
-  return function () {
-    var namespaces = process.namespaces;
-    each(contexts, function (name, context) {
-      namespaces[name].enter(context);
-    });
-    try {
-      return callback.apply(this, arguments);
-    }
-    finally {
-      each(contexts, function (name, context) {
-        namespaces[name].exit(context);
-      });
-    }
-  };
-}
 
 var net = require('net');
 wrap(net.Server.prototype, "_listen2", function (original) {
@@ -61,39 +32,6 @@ wrap(net.Socket.prototype, "connect", function (original) {
   };
 });
 
-// Shim activator for functions that have callback last
-function activator(fn) {
-  return function () {
-    var args = slice.call(arguments);
-    var callback = args[args.length - 1];
-
-    // If there is no callback, there will be no continuation to trap.
-    if (typeof callback !== "function") {
-      return fn.apply(this, arguments);
-    }
-
-    // Wrap the callback so that the continuation keeps the current contexts.
-    args[args.length - 1] = wrapCallback(callback);
-    return fn.apply(this, args);
-  };
-}
-
-// Shim activator for functions that have callback first
-function activatorFirst(fn) {
-  return function () {
-    var args = slice.call(arguments);
-    var callback = args[0];
-
-    // If there is no callback, there will be no continuation to trap.
-    if (typeof callback !== "function") {
-      return fn.apply(this, arguments);
-    }
-
-    // Wrap the callback so that the continuation keeps the current contexts.
-    args[0] = wrapCallback(callback);
-    return fn.apply(this, args);
-  };
-}
 
 var processors = ['nextTick'];
 if (process._nextDomainTick) processors.push('_nextDomainTick');
@@ -183,5 +121,137 @@ if (fs.lchmod) wrap(fs, 'lchmod', activator);
 // only wrap ftruncate in versions of node that have it
 if (fs.ftruncate) wrap(fs, 'ftruncate', activator);
 
-// PUBLIC API STARTS HERE: there isn't much of one
-module.exports = cls;
+// Wrap zlib streams
+var zProto = Object.getPrototypeOf(require('zlib').Deflate.prototype);
+wrap(zProto, "_transform", activator);
+
+// Wrap Crypto
+var crypto;
+try { crypto = require('crypto'); }
+catch (err) { }
+if (crypto) {
+  massWrap(crypto, [
+    "pbkdf2",
+    "randomBytes",
+    "pseudoRandomBytes",
+  ], activator);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+// Polyfilled version of process.addAsyncListener
+function addAsyncListener(onAsync, callbackObject) {
+  listeners.push({
+    onAsync: onAsync,
+    callbackObject: callbackObject
+  });
+}
+
+// Shim activator for functions that have callback last
+function activator(fn) {
+  return function () {
+    var index = arguments.length - 1;
+    if (typeof arguments[index] === "function") {
+      arguments[index] = wrapCallback(arguments[index]);
+    }
+    return fn.apply(this, arguments);
+  }
+}
+
+// Shim activator for functions that have callback first
+function activatorFirst(fn) {
+  return function () {
+    if (typeof arguments[0] === "function") {
+      arguments[0] = wrapCallback(arguments[0]);
+    }
+    return fn.apply(this, arguments);
+  };
+}
+
+function wrapCallback(original) {
+  var list = Array.prototype.slice.call(listeners);
+  var length = list.length;
+  var hasAny = false, hasErr = false;
+  for (var i = 0; i < length; ++i) {
+    var obj = list[i].callbackObject;
+    if (obj) {
+      hasAny = true;
+      if (obj.error) hasErr = true;
+    }
+  }
+  return hasAny ? hasErr ? catchyWrap(original, list, length)
+                         : normalWrap(original, list, length)
+                : noWrap(original, list, length);
+}
+
+function runSetup(list, length) {
+  var data = new Array(length);
+  for (var i = 0; i < length; ++i) {
+    var listener = list[i];
+    data[i] = listener.onAsync();
+  }
+  return data;
+}
+
+function runBefore(data, list, length) {
+  for (var i = 0; i < length; ++i) {
+    var obj = list[i].callbackObject;
+    if (obj && obj.before) obj.before(data[i]);
+  }
+}
+
+function runError(data, list, length) {
+  for (i = 0; i < length; ++i) {
+    obj = list[i].callbackObject;
+    if (obj && obj.after) obj.after(data[i]);
+  }
+}
+
+function runAfter(data, list, length) {
+  var i, obj;
+  for (i = 0; i < length; ++i) {
+    obj = list[i].callbackObject;
+    if (obj && obj.after) obj.after(data[i]);
+  }
+  for (i = 0; i < length; ++i) {
+    obj = list[i].callbackObject;
+    if (obj && obj.done) obj.done(data[i]);
+  }
+}
+
+function catchyWrap(original, list, length) {
+  var data = runSetup(list, length);
+  return function () {
+    runBefore(data, list, length);
+    try {
+      return original.apply(this, arguments);
+    }
+    catch (err) {
+      runError(data, list, length);
+    }
+    finally {
+      runAfter(data, list, length);
+    }
+  }
+}
+
+function normalWrap(original, list, length) {
+  var data = runSetup(list, length);
+  return function () {
+    runBefore(data, list, length);
+    try {
+      return original.apply(this, arguments);
+    }
+    finally {
+      runAfter(data, list, length);
+    }
+  }
+}
+
+function noWrap(original, list, length) {
+  for (var i = 0; i < length; ++i) {
+    list[i].onAsync();
+  }
+  return original;
+}
+

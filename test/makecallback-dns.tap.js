@@ -1,6 +1,5 @@
 'use strict';
-
-require('../bootstrap.js');
+if (!process.addAsyncListener) require('../bootstrap.js');
 
 var dns             = require('dns')
   , tap             = require('tap')
