@@ -1,6 +1,8 @@
 'use strict';
-
 var test = require('tap').test;
+
+if (!process.addAsyncListener) {
+
 
 test("overwriting startup.processNextTick", function (t) {
   t.plan(2);
@@ -62,3 +64,6 @@ test("overwriting setImmediate", function (t) {
    */
 
 });
+
+
+}
