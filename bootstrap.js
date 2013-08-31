@@ -125,6 +125,17 @@ if (fs.ftruncate) wrap(fs, 'ftruncate', activator);
 var zProto = Object.getPrototypeOf(require('zlib').Deflate.prototype);
 wrap(zProto, "_transform", activator);
 
+// Wrap Crypto
+var crypto;
+try { crypto = require('crypto'); }
+catch (err) { }
+if (crypto) {
+  massWrap(crypto, [
+    "pbkdf2",
+    "randomBytes",
+    "pseudoRandomBytes",
+  ], activator);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 
