@@ -121,6 +121,11 @@ if (fs.lchmod) wrap(fs, 'lchmod', activator);
 // only wrap ftruncate in versions of node that have it
 if (fs.ftruncate) wrap(fs, 'ftruncate', activator);
 
+// Wrap zlib streams
+var zProto = Object.getPrototypeOf(require('zlib').Deflate.prototype);
+wrap(zProto, "_transform", activator);
+
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // Polyfilled version of process.addAsyncListener
