@@ -1,8 +1,9 @@
 'use strict';
+if (!process.addAsyncListener) require('../bootstrap.js');
 
 var domain = require('domain')
   , test   = require('tap').test
-  , cls    = require('../bootstrap.js')
+  , cls    = require('continuation-local-storage')
   ;
 
 test("continuation-local storage glue with a throw in the continuation chain",
